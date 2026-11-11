@@ -103,10 +103,13 @@ function GF.ShareTrackedEffects()
 end
 
 -- Handles one received effect: adds it, or queues it for the player to
--- accept. Returns false when it is already tracked (nothing to do).
-local function Offer(key, display, abilityId, from)
+-- accept. Returns false when there is nothing to do: already tracked, a
+-- listed Major/Minor buff (those have their own checkboxes) or blacklisted.
+local function Offer(key, display, name, abilityId, from)
     local sv = GF.sv
-    if sv.trackedEffects[key] or sv.buffs[display] ~= nil then return false end
+    if sv.trackedEffects[key] or GF.IsListedBuff(name) or GF.IsBlacklisted(name, abilityId) then
+        return false
+    end
     if sv.autoAcceptShared then
         sv.trackedEffects[key] = display
         if type(key) == "string" then sv.effectIds[key] = abilityId end
@@ -127,13 +130,13 @@ local function OnData(unitTag, data)
 
     for _, abilityId in ipairs(data.ids or {}) do
         local name = zo_strformat("<<1>>", GetAbilityName(abilityId))
-        if name ~= "" and Offer(abilityId, name .. " (" .. abilityId .. ")", abilityId, from) then
+        if name ~= "" and Offer(abilityId, name .. " (" .. abilityId .. ")", name, abilityId, from) then
             count = count + 1
         end
     end
     for _, abilityId in ipairs(data.names or {}) do
         local name = zo_strformat("<<1>>", GetAbilityName(abilityId))
-        if name ~= "" and Offer(name:lower(), name, abilityId, from) then
+        if name ~= "" and Offer(name:lower(), name, name, abilityId, from) then
             count = count + 1
         end
     end

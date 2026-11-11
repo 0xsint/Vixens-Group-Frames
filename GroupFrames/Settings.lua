@@ -236,15 +236,17 @@ function GF.CreateSettings()
     local pendingSeen, pendingText, pendingRemove = nil, "", nil
     local pendingMember = "" -- @account of the chosen groupmate, "" = everyone
     local pendingShared = nil
+    local pendingBlockSeen, pendingBlockText, pendingUnblock = nil, "", nil -- blacklist controls
     local status = "" -- result of the last button press, shown on console
 
     local RefreshEffectControls -- assigned once the panel exists
 
     -- Shows the outcome of a button press: in chat, and in the status line
-    -- of the console menu. Takes the two return values of AddTrackedEffect.
-    local function Report(display, reason)
+    -- of the console menu. Takes the two return values of AddTrackedEffect
+    -- (or AddBlacklistEffect, with a different verb).
+    local function Report(display, reason, verb)
         if display then
-            status = "Now tracking " .. display
+            status = (verb or "Now tracking") .. " " .. display
         else
             status = reason or ""
         end
@@ -348,7 +350,42 @@ function GF.CreateSettings()
         reference = "GroupFramesSharedDropdown",
     }
 
-    local dynamicDropdowns = { memberDropdown, seenDropdown, trackedDropdown, sharedDropdown }
+    local blockSeenDropdown = {
+        type = "dropdown",
+        name = "Effects seen",
+        tooltip = "Every effect seen on you or your group this session, Major/Minor buffs included. Press Refresh lists while the effect is active if it is missing.",
+        choices = {},
+        placeholder = "(choose an effect)",
+        source = function()
+            local names = GF.GetBlacklistableEffects()
+            return names, names
+        end,
+        getFunc = function() return pendingBlockSeen end,
+        setFunc = function(value) pendingBlockSeen = value end,
+        scrollable = 12,
+        width = "half",
+        reference = "GroupFramesBlockSeenDropdown",
+    }
+
+    local blacklistDropdown = {
+        type = "dropdown",
+        name = "Blacklisted effects",
+        tooltip = "Effects that are never shown. Pick one to take it off the blacklist.",
+        choices = {},
+        placeholder = "(choose an effect)",
+        source = function()
+            if pendingUnblock ~= nil and not GF.sv.blacklist[pendingUnblock] then pendingUnblock = nil end
+            return SortedKeys(GF.sv.blacklist, function(key) return GF.sv.blacklist[key] end)
+        end,
+        getFunc = function() return pendingUnblock end,
+        setFunc = function(value) pendingUnblock = value end,
+        scrollable = 12,
+        width = "half",
+        reference = "GroupFramesBlacklistDropdown",
+    }
+
+    local dynamicDropdowns = { memberDropdown, seenDropdown, trackedDropdown, sharedDropdown,
+        blockSeenDropdown, blacklistDropdown }
 
     local screenWidth = zo_floor(GuiRoot:GetWidth())
     local screenHeight = zo_floor(GuiRoot:GetHeight())
@@ -561,6 +598,60 @@ function GF.CreateSettings()
             tooltip = "Rescans you and your group for active effects.",
             width = "half",
             func = function() RefreshEffectControls() end,
+        },
+
+        { type = "header", name = "Blacklist (never track)" },
+        {
+            type = "description",
+            text = "Blacklisted effects are never shown, whatever the other settings say - also when a groupmate shares them. Pick an effect seen in game, or type its name or ability id.",
+        },
+        blockSeenDropdown,
+        {
+            type = "button",
+            name = "Blacklist selected effect",
+            width = "half",
+            func = function()
+                local display, reason = GF.AddBlacklistEffect(pendingBlockSeen)
+                Report(display, reason, "Blacklisted")
+                pendingBlockSeen = nil
+                RefreshEffectControls()
+            end,
+            disabled = function() return not pendingBlockSeen end,
+        },
+        {
+            type = "editbox",
+            name = "Effect name or ability id",
+            tooltip = "A name blocks every ability with that name. An ability id blocks only that exact ability.",
+            getFunc = function() return pendingBlockText end,
+            setFunc = function(value) pendingBlockText = value or "" end,
+            width = "half",
+        },
+        {
+            type = "button",
+            name = "Blacklist typed effect",
+            width = "half",
+            func = function()
+                local display, reason = GF.AddBlacklistEffect(pendingBlockText)
+                Report(display, reason, "Blacklisted")
+                pendingBlockText = ""
+                RefreshEffectControls()
+            end,
+            disabled = function() return pendingBlockText == "" end,
+        },
+        blacklistDropdown,
+        {
+            type = "button",
+            name = "Remove from blacklist",
+            width = "half",
+            func = function()
+                if pendingUnblock ~= nil then
+                    status = "Removed " .. tostring(GF.sv.blacklist[pendingUnblock]) .. " from the blacklist"
+                end
+                GF.RemoveBlacklistEffect(pendingUnblock)
+                pendingUnblock = nil
+                RefreshEffectControls()
+            end,
+            disabled = function() return pendingUnblock == nil end,
         },
 
         { type = "header", name = "Share with groupmates" },

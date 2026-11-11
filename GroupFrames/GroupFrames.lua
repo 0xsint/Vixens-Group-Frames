@@ -113,6 +113,7 @@ GF.defaults = {
     trackOtherMajorMinor = false, -- Major/Minor buffs missing from the lists
     trackDebuffs = false, -- Major/Minor debuffs
     trackedEffects = {}, -- user-added effects, see Buffs.lua
+    blacklist = {}, -- effects never shown, same keys as trackedEffects
     effectIds = {}, -- lower-case effect name -> an ability id with that name (for sharing)
     autoAcceptShared = false, -- add effects groupmates share without asking
     buffs = {}, -- "Major Resolve" -> true/false, filled from Buffs.lua below
