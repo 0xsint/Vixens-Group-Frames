@@ -65,6 +65,12 @@ To add an effect, open the settings and go to **Other buffs (additional effects)
 
 You can also type an effect name or an ability id. A name tracks every ability with that name; an id tracks only that exact ability. To stop tracking, choose the effect under **Tracked effects** and press **Remove selected effect**.
 
+The listed Major/Minor buffs are always controlled by their own checkboxes. They cannot be added as additional effects, by hand or by sharing, so unticking one always hides it.
+
+### Blacklist
+
+Under **Blacklist (never track)** you can block effects completely. A blacklisted effect is never shown, whatever the other settings say, and is ignored when a groupmate shares it. Pick one under **Effects seen** (all effects seen this session, Major/Minor buffs included) and press **Blacklist selected effect**, or type a name or ability id. To unblock an effect, choose it under **Blacklisted effects** and press **Remove from blacklist**.
+
 The icons can be sorted by type (Major, Minor, added), by remaining time or by maximum duration, shortest or longest first.
 
 ## Sharing your effects with the group
@@ -115,7 +121,7 @@ Consoles show no error messages for addons. The **Diagnostics** section at the b
 | File | Purpose |
 | --- | --- |
 | `GroupFrames.addon` | Manifest: version, dependencies and load order |
-| `Buffs.lua` | The Major/Minor buff lists, the player's own effect list, and the decision whether an effect is tracked |
+| `Buffs.lua` | The Major/Minor buff lists, the player's own effect list, the blacklist, and the decision whether an effect is tracked |
 | `Share.lua` | Sending and receiving effect lists through LibGroupBroadcast |
 | `Stats.lua` | Ultimate, DPS/HPS and weapon bar of each member |
 | `GroupFrames.lua` | Creates and lays out the frames and runs the update loop |
